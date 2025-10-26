@@ -13,7 +13,7 @@ We used the **Human Development Report** dataset and create the value of the dif
 ## Process
 
 First, we load all the necessary packages 
-```{r eval=TRUE, include=FALSE}
+```{r} 
 library(sf)
 library(here)
 library (tidyverse)
@@ -24,7 +24,7 @@ library (dplyr)
 library (tmap)
 ```
 
-### Import the CSV
+#### Import the CSV
 
 Then, we read the .csv file, select the data we need and calculate the difference between years 2019 and 2010.
 ```{r}
@@ -38,7 +38,7 @@ df_gii<- read.csv("HDR25_Composite_indices_complete_time_series.csv",
 head(df_gii)
 ```
 
-### Import the GPKG
+#### Import the GPKG
 
 Ckeck the gpkg layers and the CRS
 ```{r}
@@ -51,7 +51,7 @@ worldmap <- st_read(here("World_Countries_(Generalized)_8414823838130214587.gpkg
   clean_names()
 head(worldmap)
 ```
-### Joining the data
+#### Joining the data
 
 Using **Countrycode** package, we match the ISO codes between our map and our data set, then we merge the files using left join. Finally we set the CRS, for this case we decided to use **ESRI:54030**, because the countries are represented closer to their actual size than the Mercator projection. 
 
@@ -62,7 +62,7 @@ gii_map <- worldmap %>%
   st_transform(., crs = 54030)
 ```
 
-### Plotting the Histogram
+#### Plotting the Histogram
 
 We set up a basic histogram to see the distribution of the values, also including the mean. 
 
@@ -87,7 +87,7 @@ gghist + geom_vline(aes(xintercept=mean(diff2019_10,
 The histogram shows that the majority of countries, experienced an improvement in their inequality index. (positive values)
 
 
-### Plotting the Map
+#### Plotting the Map
 
 Plot a static map representing the ***Difference in Gender inequality Index***, setting a scale fill gradient that represents the variation of GII: the color green for the countries that shown an improvement, while the yellow represents the countries that got worst.
 ```{r}
@@ -110,7 +110,7 @@ ggplot(gii_map) +
   theme_test() 
 ```
 
-### Plotting a Dinamic Map
+#### Plotting a Dinamic Map
 
 ```{r}
 tmap_mode("view")
@@ -131,9 +131,9 @@ tm_shape(gii_map) +
            position = c("center", "top"))
 ```
 
-### Sources
-- UNDP HUMAN DEVELOPMENT REPORTS 
+#### Sources
+- UNDP HUMAN DEVELOPMENT REPORTS: 
       https://hdr.undp.org/data-center/documentation-and-downloads
       
-- ARCGIS HUB World Countries Generalized
+- ARCGIS HUB World Countries Generalized:
       https://hub.arcgis.com/datasets/2b93b06dc0dc4e809d3c8db5cb96ba69_0/explore?location=-0.028405%2C0.000000%2C1.41
