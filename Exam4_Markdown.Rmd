@@ -13,13 +13,13 @@ We used the **Human Development Report** dataset and create the value of the dif
 ## Process
 
 First, we load all the necessary packages 
-```{r}
+```{r eval=TRUE, include=FALSE}
 library(sf)
 library(here)
 library (tidyverse)
-library(janitor)
 library(countrycode)
 library(ggplot2)
+library(janitor)
 library (dplyr)
 library (tmap)
 ```
@@ -32,7 +32,7 @@ df_gii<- read.csv("HDR25_Composite_indices_complete_time_series.csv",
                   fileEncoding = "latin1",
                   na.strings = "n/a") %>%
   select(country, iso3, gii_2010, gii_2019) %>%
-  mutate(diff2019_10 = gii_2010 - gii_2019 )
+  mutate(diff2019_10 = gii_2010 - gii_2019)
 ```
 ```{r}
 head(df_gii)
@@ -132,7 +132,8 @@ tm_shape(gii_map) +
 ```
 
 ### Sources
-- *UNDP HUMAN DEVELOPMENT REPORTS*  
+- UNDP HUMAN DEVELOPMENT REPORTS 
       https://hdr.undp.org/data-center/documentation-and-downloads
-- *ARCGIS HUB World Countries Generalized*
+      
+- ARCGIS HUB World Countries Generalized
       https://hub.arcgis.com/datasets/2b93b06dc0dc4e809d3c8db5cb96ba69_0/explore?location=-0.028405%2C0.000000%2C1.41
