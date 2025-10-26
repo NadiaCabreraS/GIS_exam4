@@ -1,0 +1,138 @@
+---
+title: "World Inequality Index (2019 - 2010)"
+author: "Nadia Cabrera"
+date: "2025-10-25"
+output: html_document
+---
+## Objective and Methodology
+
+Explore the change in the **Gender Inequality Index (GII)** by country, between 2010 and 2019.
+
+We used the **Human Development Report** dataset and create the value of the difference between 2019 and 2010. Then we merge it with world boundaries.The maps below shows the variation in GII between 2010 and 2019.
+
+## Process
+
+First, we load all the necessary packages 
+```{r}
+library(sf)
+library(here)
+library (tidyverse)
+library(janitor)
+library(countrycode)
+library(ggplot2)
+library (dplyr)
+library (tmap)
+```
+
+### Import the CSV
+
+Then, we read the .csv file, select the data we need and calculate the difference between years 2019 and 2010.
+```{r}
+df_gii<- read.csv("HDR25_Composite_indices_complete_time_series.csv", 
+                  fileEncoding = "latin1",
+                  na.strings = "n/a") %>%
+  select(country, iso3, gii_2010, gii_2019) %>%
+  mutate(diff2019_10 = gii_2010 - gii_2019 )
+```
+```{r}
+head(df_gii)
+```
+
+### Import the GPKG
+
+Ckeck the gpkg layers and the CRS
+```{r}
+st_layers(here("World_Countries_(Generalized)_8414823838130214587.gpkg"))
+```
+
+Load the gpkg
+```{r}
+worldmap <- st_read(here("World_Countries_(Generalized)_8414823838130214587.gpkg"))%>%
+  clean_names()
+head(worldmap)
+```
+### Joining the data
+
+Using **Countrycode** package, we match the ISO codes between our map and our data set, then we merge the files using left join. Finally we set the CRS, for this case we decided to use **ESRI:54030**, because the countries are represented closer to their actual size than the Mercator projection. 
+
+```{r}
+gii_map <- worldmap %>%
+  mutate(iso= countrycode(iso, origin = "iso2c", destination = "iso3c")) %>%
+  left_join(.,df_gii, by=c("iso" = "iso3")) %>%
+  st_transform(., crs = 54030)
+```
+
+### Plotting the Histogram
+
+We set up a basic histogram to see the distribution of the values, also including the mean. 
+
+```{r}
+gghist <- ggplot(df_gii, 
+                 aes(x=diff2019_10)) + 
+  geom_histogram(color="black", 
+                 fill="white",
+                 bins=60)
+  labs(title="Distribution of change in the GII (2010–2019)", 
+       x="Variation of GII",
+       y="Frequency")
+# add a vertical line to the hisogram showing mean tempearture
+gghist + geom_vline(aes(xintercept=mean(diff2019_10, 
+                                        na.rm=TRUE)),
+                    color="blue", 
+                    linetype="dashed", 
+                    size=1)+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The histogram shows that the majority of countries, experienced an improvement in their inequality index. (positive values)
+
+
+### Plotting the Map
+
+Plot a static map representing the ***Difference in Gender inequality Index***, setting a scale fill gradient that represents the variation of GII: the color green for the countries that shown an improvement, while the yellow represents the countries that got worst.
+```{r}
+ggplot(gii_map) +
+  geom_sf(aes(fill = diff2019_10), color = "grey70", size = 0.15) +
+  scale_fill_gradient2(
+    name = "Variation of GII",
+    low = "#FFD700",    # amarillo (bajos)
+    mid = "white",      # 0
+    high = "#18392B",   # verde (altos)
+    midpoint = 0,
+    limits=NULL,
+    na.value = "grey90"
+  ) +
+  coord_sf(crs = "ESRI:54030", expand = FALSE) +
+  labs(
+    title = "Difference in Gender inequality index 2010 - 2019",
+    caption = "Source: Human Development Report (UNDP)"
+  ) +
+  theme_test() 
+```
+
+### Plotting a Dinamic Map
+
+```{r}
+tmap_mode("view")
+tm_shape(gii_map) + 
+  # add polygon layer
+  tm_polygons(fill="diff2019_10",
+              fill.scale= tm_scale_intervals (values="carto.blu_grn",
+                                             style="jenks"),
+              fill_alpha = 0.9,
+          
+              fill.legend = tm_legend(title = "Difference in inequality index", 
+                                      size = 0.4))+
+  tm_basemap(server = "OpenStreetMap") +
+  tm_compass(type = "arrow", position = c("left", "bottom")) + 
+  tm_scalebar(position = c("left", "bottom"))+
+  tm_title("Difference in Gender inequality index 2010 - 2019", 
+           size = 1,
+           position = c("center", "top"))
+```
+
+### Sources
+- *UNDP HUMAN DEVELOPMENT REPORTS*  
+      https://hdr.undp.org/data-center/documentation-and-downloads
+- *ARCGIS HUB World Countries Generalized*
+      https://hub.arcgis.com/datasets/2b93b06dc0dc4e809d3c8db5cb96ba69_0/explore?location=-0.028405%2C0.000000%2C1.41
